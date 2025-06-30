@@ -9,7 +9,7 @@ namespace Ecom.API.Mapping
         public ProductMapping()
         {
             CreateMap<Product, ProductDTO>()
-               //.ForMember(x => x.CategoryName, op => op.MapFrom(src => src.Category.Name))
+               .ForMember(x => x.CategoryName, op => op.MapFrom(src => src.Category.Name))
                 
                 .ReverseMap(); 
 
