@@ -3,6 +3,7 @@ using Ecom.CORE.DTO;
 using Ecom.CORE.Entities.Product;
 using Ecom.CORE.Interfaces;
 using Ecom.CORE.Services;
+using Ecom.CORE.Sharing;
 using Ecom.INFRASTRUCTURE.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,11 +20,58 @@ namespace Ecom.INFRASTRUCTURE.Repositories
         private readonly IMapper mapper;
         private readonly IImageManagementService imageManagementService;
 
-        public ProductRepositiry(AppDbContext context, IMapper mapper,IImageManagementService imageManagementService) : base(context)
+        public ProductRepositiry(AppDbContext context, IMapper mapper, IImageManagementService imageManagementService) : base(context)
         {
             this.context = context;
             this.mapper = mapper;
             this.imageManagementService = imageManagementService;
+        }
+
+        public async Task<IEnumerable<ProductDTO>> GetAllAsync(ProductParams productParams)
+        {
+            var query = context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Photos)
+                .AsNoTracking();
+
+            //filtering by Word
+            if (!string.IsNullOrEmpty(productParams.Search))
+            //query= query.Where(p=>p.Name.ToLower().Contains(productParams.Search.ToLower()) 
+            // || 
+            //  p.Description.ToLower().Contains(productParams.Search.ToLower()));
+            {
+                var searchOfWords=productParams.Search.Split(' ');
+                query = query.Where(m => searchOfWords.All(word => 
+                m.Name.ToLower().Contains(word.ToLower())||
+                m.Description.ToLower().Contains(word.ToLower()) 
+                ));
+            }
+
+
+
+            //filtering by Category
+            if (productParams.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == productParams.CategoryId);
+            }
+
+            //sorting Product
+            if (!string.IsNullOrEmpty(productParams.Sort))
+            {
+                query = productParams.Sort switch
+                {
+                    "PriceAce" => query.OrderBy(p => p.NewPrice),
+                    "PriceDce" => query.OrderByDescending(p => p.NewPrice),
+                    _ => query.OrderBy(p => p.Name),
+                };
+            }
+            // Product Pagination 
+            query= query.Skip((productParams.PageSize) *(productParams.PageNumber -1)).Take(productParams.PageSize);
+            productParams.PageNumber = productParams.PageNumber > 0 ? productParams.PageNumber : 1;
+            productParams.PageSize   = productParams.PageSize > 0 ? productParams.PageSize  : 3;
+
+            var result = mapper.Map<List<ProductDTO>>(query);
+            return result;
         }
 
         public async Task<bool> AddAsync(AddProductDTO productDto)
@@ -49,8 +97,6 @@ namespace Ecom.INFRASTRUCTURE.Repositories
 
             return true;
         }
-
-
 
         public async Task<bool> UpdateAsync(UpdateProductDTO updateProductDTO)
         {
