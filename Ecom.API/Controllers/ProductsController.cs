@@ -24,8 +24,8 @@ namespace Ecom.API.Controllers
             {
                   var product = await work.ProductRepositiry.GetAllAsync(productParams);
 
-                  var totalCount= await work.ProductRepositiry.CountAsync();
-                    return Ok(new Pagination<ProductDTO>(productParams.PageNumber,productParams.PageSize,totalCount,product) );
+                  
+                    return Ok(new Pagination<ProductDTO>(productParams.PageNumber,productParams.PageSize,product.TotalCount,product.products) );
 
                 return BadRequest(new ResponseAPI(400, "Products Not Found"));
 

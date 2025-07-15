@@ -16,7 +16,7 @@ builder.Services.AddCors(
             builder.AllowAnyHeader()
                    .AllowAnyMethod()
                    .AllowCredentials()
-                   .WithOrigins("https://localhost:4200");
+                   .WithOrigins("http://localhost:4200");
         });
     });
 
@@ -41,6 +41,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors("CORSPolicy");
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseStaticFiles();
 app.UseStatusCodePagesWithReExecute("/errors/{0}");
 app.UseHttpsRedirection();
 
